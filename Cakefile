@@ -3,7 +3,7 @@
 task "full", ->
   exec "coffee -cb lib/icui.coffee", (e) ->
     console.log e if e
-    exec "uglifyjs lib/strftime.js lib/icui.js -o js/jquery.icui.min.js -c -m", (e) ->
+    exec "uglifyjs lib/icui.js -o js/jquery.icui.min.js -c -m", (e) ->
       console.log e if e
       exec "rm lib/icui.js"
   exec "git checkout gh-pages", (e) ->
@@ -21,7 +21,7 @@ task "full", ->
 build = (cb) ->
   exec "coffee -cb lib/icui.coffee", (e) ->
     console.log e if e
-    exec "uglifyjs2 lib/strftime.js lib/icui.js -o js/jquery.icui.min.js -c -m", (e) ->
+    exec "uglifyjs2 lib/icui.js -o js/jquery.icui.min.js -c -m", (e) ->
       console.log e if e
       exec "rm lib/icui.js", (e) ->
         cb() if cb
@@ -29,7 +29,7 @@ build = (cb) ->
 task 'build', ->
   exec "coffee -cb lib/icui.coffee", (e) ->
       console.log e if e
-      exec "uglifyjs2 lib/strftime.js lib/icui.js -o js/jquery.icui.min.js -c -m", (e) ->
+      exec "uglifyjs2 lib/icui.js -o js/jquery.icui.min.js -c -m", (e) ->
         console.log e if e
         exec "rm lib/icui.js"
 
@@ -86,14 +86,9 @@ task 'develop', ->
           response.write("""$(function() {document.write("<h1>Compile Error</h1><pre>#{("" + e).replace(/\n/g, "\\n")}</pre>");});""", 'UTF-8')
           response.end()
         else
-          exec "cat lib/icui.js > js/icui.js && cat lib/strftime.js >> js/icui.js", (e) ->
-            if e
-              response.write("""document.body.write('<h1>Compile Error</h1><pre>#{e}</pre>)""", 'UTF-8')
-              response.end()
-            else
-              fs.readFile 'js/icui.js', "binary", (err, file) ->
-                response.write(file, "binary")
-                response.end()
+          fs.readFile 'lib/icui.js', "binary", (err, file) ->
+            response.write(file, "binary")
+            response.end()
     else if extension == 'js' && !uri.match(/jasmine/)
       comps = uri.split('.')
       comps.pop()
