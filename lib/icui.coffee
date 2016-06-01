@@ -57,18 +57,6 @@ do ($ = jQuery) ->
       str += Helpers.option value, label, varOrFunc for value, label of obj
       str + "</select>"
 
-    daysOfTheWeek: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
-    monthsOfTheYear: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
-    # THis is a wrapper for the most ridicilous API in probably the whole of
-    # JavaScript.
-    dateFromString: (str) ->
-      [date, time] = str.split(/[\sT]/)
-      [y, m, d] = (parseInt(t, 10) for t in date.split('-'))
-      [h, min, rest...] = (parseInt(t, 10) for t in time.split(':'))
-      m = if m - 1 >= 0 then m - 1 else 11
-      tz = (new Date).getTimezoneOffset()
-      new Date(Date.UTC(y, m, d, h, min, 0, 0))
-
   # The Base Class
   # --------------
   #
@@ -281,23 +269,23 @@ do ($ = jQuery) ->
   # user interface, however we could probably easily extend this to use
   # something like jQuery UI.
   class DatePicker extends Option
-    defaults: -> @data.time ?= new Date
+    defaults: -> @data.moment ?= moment()
 
-    fromData: (d) -> @data.time = Helpers.dateFromString d
+    fromData: (d) -> @data.moment = moment d
 
     getData: -> @data
     render: ->
       @elem = $("""
         <div class="DatePicker">
-          <input type="date" value="#{@data.time.strftime('%Y-%m-%d')}" />
-          <input type="time" value="#{@data.time.strftime('%H:%M')}" />
+          <input type="date" value="#{@data.moment.format('L')}" />
+          <input type="time" value="#{@data.moment.format('LT')}" />
         </div>
       """)
       ss = @elem.find('input')
       date = ss.first()
       time = ss.last()
       ss.change (e) =>
-        @data.time = Helpers.dateFromString date.val() + ' ' + time.val()
+        @data.moment = moment(date.val() + ' ' + time.val(), 'L LT')
       @elem.append super
       @elem
 
@@ -308,7 +296,7 @@ do ($ = jQuery) ->
   class StartDate extends DatePicker
     destroyable: -> false
     clonable: -> false
-    getData: -> {type: "start_date", values: @data.time}
+    getData: -> {type: "start_date", values: @data.moment.format()}
 
     render: ->
       @elem = super
@@ -322,7 +310,7 @@ do ($ = jQuery) ->
   class EndTime extends DatePicker
     destroyable: -> true
     clonable: -> false
-    getData: -> {type: "end_time", values: @data.time}
+    getData: -> {type: "end_time", values: @data.moment.format()}
 
     render: ->
       @elem = super
@@ -513,7 +501,7 @@ do ($ = jQuery) ->
   # -----
   # Until will repeat the event until a specified date.
   class Until extends DatePicker
-    getData: -> @data.time
+    getData: -> @data.moment.format()
     clonable: -> false
     destroyable: -> false
 
@@ -546,7 +534,7 @@ do ($ = jQuery) ->
       str = """
       <div class="Day">
         <select>"""
-      for day, i in Helpers.daysOfTheWeek
+      for day, i in moment.weekdays()
         str += Helpers.option i.toString(), day, @data.value.toString()
       str +=  """</select>
       </div>
@@ -566,7 +554,7 @@ do ($ = jQuery) ->
       <div class="DayOfWeek">
         <input type="number" value=#{@data.nth} /><span>nth</span>.
         <select>"""
-      for day, i in Helpers.daysOfTheWeek
+      for day, i in moment.weekdays()
         str += Helpers.option i.toString(), day, @data.day.toString()
       str +=  "</select></div>"
       @elem = $ str
@@ -618,7 +606,7 @@ do ($ = jQuery) ->
       str = """
       <div class="DayOfYear">
         <select>"""
-      for month, i in Helpers.monthsOfTheYear
+      for month, i in moment.months()
         str += Helpers.option (i + 1).toString(), month, @data.value.toString()
       str +=  "</select></div>"
       @elem = $ str
