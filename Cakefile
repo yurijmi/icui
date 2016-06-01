@@ -61,7 +61,7 @@ task 'develop', ->
 
           <h1>Editing</h1>
           <form>
-            <input type="hidden" class="icuiinp" value='{"start_date":"2013-06-23T17:30:00.000Z","rrules":[{"rule_type":"IceCube::WeeklyRule", "count": 3, "interval":1,"validations":{"offset_from_pascha": [-3]}}]}' />
+            <input type="hidden" class="icuiinp" value='{"start_time":"2013-06-23T17:30:00.000Z","rrules":[{"rule_type":"IceCube::WeeklyRule", "count": 3, "interval":1,"validations":{"offset_from_pascha": [-3]}}]}' />
             <input type="submit"/>
           </form>
           <h1>Make new</h1>
