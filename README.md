@@ -25,7 +25,9 @@ def json2yaml(str)
 end
 ~~~
 
-ICUI is dependent on jQuery and expects it to be already present. Typically ICUI will be used with a hidden form field which contains as it's value the JSON representation of the IceCube schedule. Then the jQuery method `icui` should be called to instantiate ICUI. The form field will be updated automatically with a new JSON representation on form submission.
+ICUI is dependent on jQuery and Moment.JS and expects them to be already present.
+
+Typically ICUI will be used with a hidden form field which contains as it's value the JSON representation of the IceCube schedule. Then the jQuery method `icui` should be called to instantiate ICUI. The form field will be updated automatically with a new JSON representation on form submission.
 
 For usage with AJAX the `icui.getData()` method must be called to get a native representation of the data.
 
@@ -51,11 +53,7 @@ Gotcha's
 
 ICUI isn't tested on any IE, but should work, but might require a JSON shim. 
 
-ICUI currently extends the `Date` prototype with a `strftime` (written by Gianni Chiappetta) method, the plan is to drop this in the future.
-
 Currently ICUI doesn't support the rules and validations that have higher resolution than 1 day, however it should be fairly trivial to add these and in fact this is on the development roadmap.
-
-ICUI currently deals with all times as if they are UTC times.
 
 Development and Extension
 -------------------------
