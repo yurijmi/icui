@@ -48,6 +48,7 @@ task 'develop', ->
         <head>
           <title>ICUI Test</title>
           <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+          <script src="http://momentjs.com/downloads/moment.min.js"></script>
           <script src="icui.js?nocache=#{Math.random()}"></script>
           <link rel="stylesheet" href="app.css" />
         </head>
