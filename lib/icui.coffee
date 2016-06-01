@@ -131,11 +131,11 @@ do ($ = jQuery) ->
       @target = @parent.siblings('.icui').first()
 
     fromData: (d) ->
-      @children.push new StartDate(@, d["start_date"])
+      @children.push new StartDate(@, d["start_time"])
       if d["end_time"]
         @has_ending_time = yes
         @children.push new EndTime(@, d["end_time"])
-      for k,v of d when v.length > 0 and k != "start_date" and k != "end_time"
+      for k,v of d when v.length > 0 and k != "start_time" and k != "end_time"
         @has_rules = yes
         @children.push new TopLevel(@, {type: k, values: v})
 
@@ -296,7 +296,7 @@ do ($ = jQuery) ->
   class StartDate extends DatePicker
     destroyable: -> false
     clonable: -> false
-    getData: -> {type: "start_date", values: @data.moment.format()}
+    getData: -> {type: "start_time", values: @data.moment.format()}
 
     render: ->
       @elem = super
