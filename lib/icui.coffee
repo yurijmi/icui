@@ -8,14 +8,14 @@
 do ($ = jQuery) ->
   # Helpers
   # -------
-  Helpers = 
+  Helpers =
     # `clone` will make a copy of an object including all child object.
     clone: clone = (obj) ->
       if not obj? or typeof obj isnt 'object'
         return obj
 
       if obj instanceof Date
-        return new Date(obj.getTime()) 
+        return new Date(obj.getTime())
 
       if obj instanceof RegExp
         flags = ''
@@ -23,8 +23,8 @@ do ($ = jQuery) ->
         flags += 'i' if obj.ignoreCase?
         flags += 'm' if obj.multiline?
         flags += 'y' if obj.sticky?
-        return new RegExp(obj.source, flags) 
-      # Some care is taken to avoid cloning the parent class, 
+        return new RegExp(obj.source, flags)
+      # Some care is taken to avoid cloning the parent class,
       # as each ICUI object holds both a reference to a child objects
       # as well as to it's own parent, which could is a cyclic reference.
       if obj.parent? && obj.data?
@@ -38,9 +38,9 @@ do ($ = jQuery) ->
         newInstance[key] = clone obj[key]
 
       return newInstance
-    # `option` constructs an option for a select where it handles the 
+    # `option` constructs an option for a select where it handles the
     # case when to add the `selected` attribute. The third argument can
-    # optionally be a function, otherwise it compare the third argument 
+    # optionally be a function, otherwise it compare the third argument
     # with the first and if equal mark the option as selected.
     option: (value, name, varOrFunc) ->
       if typeof varOrFunc == 'function'
@@ -49,33 +49,22 @@ do ($ = jQuery) ->
         selected = varOrFunc == value
       """<option value="#{value}"#{
         if selected then ' selected="selected"' else ""
-      }>#{name}</option>""" 
-    
+      }>#{name}</option>"""
+
     # `select` will genearate a `<select>` tag.
     select: (varOrFunc, obj) ->
       str = "<select>"
       str += Helpers.option value, label, varOrFunc for value, label of obj
       str + "</select>"
-    
-    daysOfTheWeek: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
-    # THis is a wrapper for the most ridicilous API in probably the whole of
-    # JavaScript.
-    dateFromString: (str) ->
-      [date, time] = str.split(/[\sT]/)
-      [y, m, d] = (parseInt(t, 10) for t in date.split('-'))
-      [h, min, rest...] = (parseInt(t, 10) for t in time.split(':'))
-      m = if m - 1 >= 0 then m - 1 else 11
-      tz = (new Date).getTimezoneOffset()
-      new Date(Date.UTC(y, m, d, h, min, 0, 0))
-  
+
   # The Base Class
   # --------------
   #
   # Option is the class from which nearly all other classes in ICUI
   # inherit. A number of function are meant to be overriden.
   class Option
-  
-    constructor: (@parent, data = null) -> 
+
+    constructor: (@parent, data = null) ->
       @children = []
       @data = {}
       if data != '__clone'
@@ -92,34 +81,34 @@ do ($ = jQuery) ->
     destroyable: -> @parent.children.length > 1
     # `clone` is the event handler that will insert a copy of the
     # reciever as a sibling to the reciever.
-    clone: => 
+    clone: =>
       @parent.children.push Helpers.clone @
       @triggerRender()
     # `destroy` will remove the reciever from it's parents list
     # of children.
-    destroy: => 
+    destroy: =>
       @elem.slideUp 100, =>
         @parent.children.splice(@parent.children.indexOf(@), 1)
         @parent.triggerRender()
-    
+
     # Render is the code that is responsible for setting up an
     # HTML fragment and binding all the necessary UI callbacks
     # onto it. It is recommended to call super as this will make
     # all the child objects render as wall as displays the generic
     # cloning UI.
-    render: -> 
+    render: ->
       out = $ "<div></div>"
       out.append $("<span class='btn clone'>+</span>").click(@clone) if @clonable()
       out.append $("<span class='btn destroy'>-</span>").click(@destroy) if @destroyable()
       out.append @renderChildren()
       out.children() # <- get's rid of the container div
-    
+
     renderChildren: -> c.render() for c in @children
     # This will trigger a rerender for the whole structure without needing
     # to keep a global reference to the root node.
     triggerRender: -> @parent.triggerRender()
 
-  
+
   # The Root Node
   # -------------
   #
@@ -131,31 +120,31 @@ do ($ = jQuery) ->
     destroyable: -> no
     has_ending_time: no
     has_rules: no
-    
+
     constructor: ->
       super
       # The parent of the root node is the jQuerified element
       # itself, this will typically be an `<input type="hidden">`.
-      # We insert our container div after it and save it into the 
+      # We insert our container div after it and save it into the
       # `@target` variable.
       @parent.after "<div class='icui'></div>"
       @target = @parent.siblings('.icui').first()
-    
+
     fromData: (d) ->
-      @children.push new StartDate(@, d["start_date"])
+      @children.push new StartDate(@, d["start_time"])
       if d["end_time"]
         @has_ending_time = yes
-        @children.push new EndTime(@, d["end_time"]) 
-      for k,v of d when v.length > 0 and k != "start_date" and k != "end_time"
+        @children.push new EndTime(@, d["end_time"])
+      for k,v of d when v.length > 0 and k != "start_time" and k != "end_time"
         @has_rules = yes
         @children.push new TopLevel(@, {type: k, values: v})
-  
+
     defaults: ->
       @children.push new StartDate(@)
       #@children.push new TopLevel(@)
-  
+
     triggerRender: -> @render()
-  
+
     render: ->
       @target.html(@renderChildren())
       unless @has_ending_time
@@ -177,8 +166,8 @@ do ($ = jQuery) ->
           @triggerRender()
           false
         @target.append(link)
-        
-    
+
+
     getData: ->
       data = {}
       for child in @children
@@ -188,8 +177,8 @@ do ($ = jQuery) ->
         else
           data[d.type] = d.values
       data
-      
-    
+
+
   # TopLevel
   # --------
   # The `TopLevel` class let's the user pick whether he would like
@@ -213,13 +202,13 @@ do ($ = jQuery) ->
   #              |- DayOfYear +-
   #              `- OffsetFromPascha +-
   class TopLevel extends Option
-  
+
     #destroyable: -> @parent.children.length > 2
-  
+
     defaults: ->
       @data.type = 'rtimes'
       @children = [new DatePicker @]
-  
+
     fromData: (d) ->
       @data.type = d.type
       if @data.type.match /times$/
@@ -228,7 +217,7 @@ do ($ = jQuery) ->
       else
         for v in d.values
           @children.push new Rule @, v
-          
+
     getData: ->
       if @data.type.match /times$/
         values = (child.getData().time for child in @children)
@@ -236,9 +225,9 @@ do ($ = jQuery) ->
       else
         values = (child.getData() for child in @children)
         {type: @data.type, values}
-      
-  
-    render: -> 
+
+
+    render: ->
       @elem = $("""
     <div class="toplevel">Event <select>
       #{Helpers.option 1, "occurs", => @data.type.match /^r/}
@@ -271,7 +260,7 @@ do ($ = jQuery) ->
         @triggerRender()
       @elem.append super
       @elem
-  
+
   # Choosing Individual DateTimes
   # -----------------------------
   #
@@ -280,26 +269,26 @@ do ($ = jQuery) ->
   # user interface, however we could probably easily extend this to use
   # something like jQuery UI.
   class DatePicker extends Option
-    defaults: -> @data.time ?= new Date
-    
-    fromData: (d) -> @data.time = Helpers.dateFromString d
-    
+    defaults: -> @data.moment ?= moment()
+
+    fromData: (d) -> @data.moment = moment d
+
     getData: -> @data
-    render: -> 
+    render: ->
       @elem = $("""
         <div class="DatePicker">
-          <input type="date" value="#{@data.time.strftime('%Y-%m-%d')}" />
-          <input type="time" value="#{@data.time.strftime('%H:%M')}" />
+          <input type="date" value="#{@data.moment.format('L')}" />
+          <input type="time" value="#{@data.moment.format('LT')}" />
         </div>
       """)
       ss = @elem.find('input')
       date = ss.first()
       time = ss.last()
       ss.change (e) =>
-        @data.time = Helpers.dateFromString date.val() + ' ' + time.val()
+        @data.moment = moment(date.val() + ' ' + time.val(), 'L LT')
       @elem.append super
       @elem
-  
+
   # Picking the initial Date
   # ------------------------
   # `StartDate` is a concrete DatePicker subclass that takes care of picking
@@ -307,13 +296,13 @@ do ($ = jQuery) ->
   class StartDate extends DatePicker
     destroyable: -> false
     clonable: -> false
-    getData: -> {type: "start_date", values: @data.time}
-  
+    getData: -> {type: "start_time", values: @data.moment.format()}
+
     render: ->
       @elem = super
       @elem.prepend("Start time")
       @elem
-  
+
   # Picking the ending Date
   # -----------------------
   # `EndTime` is a concrete DatePicker subclass that takes care of picking
@@ -321,25 +310,25 @@ do ($ = jQuery) ->
   class EndTime extends DatePicker
     destroyable: -> true
     clonable: -> false
-    getData: -> {type: "end_time", values: @data.time}
+    getData: -> {type: "end_time", values: @data.moment.format()}
 
     render: ->
       @elem = super
       @elem.prepend("End time")
       @elem
-          
+
   # Specifying Rules
   # ----------------
   # Rules specify a sort of generator which than validations filter out.
   # So the `YearlyRule` will generate thing which happen roughly once per
   # year.
   class Rule extends Option
-  
+
     defaults: ->
       @data.rule_type = 'IceCube::YearlyRule'
       @children = [new Validation @]
       @data.interval = 1
-    
+
     fromData: (d)->
       @data.rule_type = d.rule_type
       @data.interval = d.interval
@@ -349,7 +338,7 @@ do ($ = jQuery) ->
         @children.push new Validation @, {type: 'until', value: d.until}
       for k, v of d.validations
         @children.push new Validation @, {type: k, value: v}
-  
+
     getData: ->
       validations = {}
       for child in @children when child.data.type isnt 'count' and child.data.type isnt 'until'
@@ -360,13 +349,13 @@ do ($ = jQuery) ->
         for k,v of child.getData()
           h[k] = v
       h
-      
+
     render: ->
       @elem = $("""
         <div class="Rule">
-          Every 
+          Every
           <input type="number" value="#{@data.interval}" size="2" width="30" />
-          #{Helpers.select @data.rule_type, 
+          #{Helpers.select @data.rule_type,
           "IceCube::YearlyRule": 'years'
           "IceCube::MonthlyRule": 'months'
           "IceCube::WeeklyRule": 'weeks'
@@ -381,7 +370,7 @@ do ($ = jQuery) ->
         @triggerRender()
       @elem.append super
       @elem
-      
+
   # Validation
   # ----------
   # Validation let's the user pick what type of validation to use
@@ -390,7 +379,7 @@ do ($ = jQuery) ->
     defaults: ->
       @data.type = 'count'
       @children = [new Count @]
-    
+
     fromData: (d) ->
       @data.type = d.type
       switch d.type
@@ -408,7 +397,7 @@ do ($ = jQuery) ->
             klass = @choices(d.type)
             c = new klass @, v
             @children.push c
-    
+
     choices: (v) ->
       {
         count: Count
@@ -417,9 +406,10 @@ do ($ = jQuery) ->
         day_of_week: DayOfWeek
         day_of_month: DayOfMonth
         day_of_year: DayOfYear
+        month_of_year: MonthOfYear
         offset_from_pascha: OffsetFromPascha
       }[v]
-    
+
     getData: ->
       key = @data.type
       value = switch key
@@ -436,7 +426,7 @@ do ($ = jQuery) ->
       obj = {}
       obj[key] = value
       obj
-      
+
     destroyable: -> true
     render: ->
       str = """
@@ -446,10 +436,11 @@ do ($ = jQuery) ->
           #{Helpers.option "until", 'event is before', @data.type}
           #{Helpers.option "day", 'is this day of the week', @data.type}"""
       if @parent.data.rule_type in ["IceCube::YearlyRule", "IceCube::MonthlyRule"]
-        str += Helpers.option "day_of_week", 'is this day of the nth week', @data.type 
+        str += Helpers.option "day_of_week", 'is this day of the nth week', @data.type
         str += Helpers.option "day_of_month", 'is the nth day of the month', @data.type
       if @parent.data.rule_type is "IceCube::YearlyRule"
         str += Helpers.option "day_of_year", 'is the nth day of the year', @data.type
+        str += Helpers.option "month_of_year", "falls within month", @data.type
         str += Helpers.option "offset_from_pascha", 'is offset from Pascha', @data.type
       str += """
         </select>
@@ -470,7 +461,7 @@ do ($ = jQuery) ->
         @triggerRender()
       @elem.append super
       @elem
-  
+
   # Validation Types
   # ================
   # we have a seperate class for each type of validation that the
@@ -479,7 +470,7 @@ do ($ = jQuery) ->
   # Validation Instance
   # -------------------
   # ValidationInstance is a base class for some of the simpler
-  # validation types (typically those with a single parameter). 
+  # validation types (typically those with a single parameter).
   class ValidationInstance extends Option
     defaults: -> @data.value = @default
     fromData: (d) -> @data.value = d
@@ -510,10 +501,10 @@ do ($ = jQuery) ->
   # -----
   # Until will repeat the event until a specified date.
   class Until extends DatePicker
-    getData: -> @data.time
+    getData: -> @data.moment.format()
     clonable: -> false
     destroyable: -> false
-  
+
 
   # Day of Month
   # ------------
@@ -543,8 +534,8 @@ do ($ = jQuery) ->
       str = """
       <div class="Day">
         <select>"""
-      for day, i in Helpers.daysOfTheWeek
-        str += Helpers.option i.toString(), day, @data.value.toString() 
+      for day, i in moment.weekdays()
+        str += Helpers.option i.toString(), day, @data.value.toString()
       str +=  """</select>
       </div>
       """
@@ -563,8 +554,8 @@ do ($ = jQuery) ->
       <div class="DayOfWeek">
         <input type="number" value=#{@data.nth} /><span>nth</span>.
         <select>"""
-      for day, i in Helpers.daysOfTheWeek
-        str += Helpers.option i.toString(), day, @data.day.toString() 
+      for day, i in moment.weekdays()
+        str += Helpers.option i.toString(), day, @data.day.toString()
       str +=  "</select></div>"
       @elem = $ str
       pluralize = => @elem.find('span').first().text switch @data.nth
@@ -580,7 +571,7 @@ do ($ = jQuery) ->
       pluralize()
       @elem.append(super)
       @elem
-    
+
   # Day of Year
   # -----------
   # Allows to specify a particular day of the year.
@@ -591,7 +582,7 @@ do ($ = jQuery) ->
     render: ->
       str = """
       <div class="DayOfYear">
-        <input type="number" value=#{Math.abs @data.value} /> day from the 
+        <input type="number" value=#{Math.abs @data.value} /> day from the
         <select>
           #{Helpers.option '+', 'beggening', => @data.value >= 0}
           #{Helpers.option '-', 'end', => @data.value < 0}
@@ -603,21 +594,41 @@ do ($ = jQuery) ->
         @data.value *= if @elem.find('select').val() == '+' then 1 else -1
       @elem.append(super)
       @elem
-      
+
+  # Month of Year
+  # -----------
+  # Allows to specify a particular month of the year.
+  class MonthOfYear extends Option
+    getData: -> @data.value
+    fromData: (d) -> @data.value = d
+    defaults: -> @data.value = 1
+    render: ->
+      str = """
+      <div class="DayOfYear">
+        <select>"""
+      for month, i in moment.months()
+        str += Helpers.option (i + 1).toString(), month, @data.value.toString()
+      str +=  "</select></div>"
+      @elem = $ str
+      @elem.find('input,select').change (e) =>
+        @data.value = @elem.find('select').val()
+      @elem.append(super)
+      @elem
+
   # Offset from Pascha
   # ------------------
-  # This class allows the user to specify dates in relation to the 
+  # This class allows the user to specify dates in relation to the
   # Orthodox celebration of Easter, Pascha.
   class OffsetFromPascha extends Option
     getData: -> @data.value
     defaults: -> @data.value = 0
-    
+
     fromData: (d) -> @data.value = d
-    
+
     render: ->
       str = """
       <div class="OffsetFromPascha">
-        <input type="number" value=#{Math.abs @data.value} /> days 
+        <input type="number" value=#{Math.abs @data.value} /> days
         <select>
           #{Helpers.option '+', 'after', => @data.value >= 0}
           #{Helpers.option '-', 'before', => @data.value < 0}
@@ -629,7 +640,7 @@ do ($ = jQuery) ->
         @data.value *= if @elem.find('select').val() == '+' then 1 else -1
       @elem.append(super)
       @elem
-  
+
   # ICUI
   # ----
   # This is the class that is responsible for initializing the whole
@@ -637,8 +648,8 @@ do ($ = jQuery) ->
   # representation.
   class ICUI
     constructor: ($el, opts) ->
-      data = try 
-        JSON.parse($el.val()) 
+      data = try
+        JSON.parse($el.val())
       catch e
         null
       @root = new Root $el, data
@@ -650,7 +661,7 @@ do ($ = jQuery) ->
         else
           $el.val JSON.stringify @getData()
       $el.after @root.render()
-  
+
     getData: ->
       @root.getData()
 

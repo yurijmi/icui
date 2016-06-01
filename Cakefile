@@ -3,7 +3,7 @@
 task "full", ->
   exec "coffee -cb lib/icui.coffee", (e) ->
     console.log e if e
-    exec "uglifyjs2 lib/strftime.js lib/icui.js -o js/jquery.icui.min.js -c -m", (e) ->
+    exec "uglifyjs lib/icui.js -o js/jquery.icui.min.js -c -m", (e) ->
       console.log e if e
       exec "rm lib/icui.js"
   exec "git checkout gh-pages", (e) ->
@@ -21,7 +21,7 @@ task "full", ->
 build = (cb) ->
   exec "coffee -cb lib/icui.coffee", (e) ->
     console.log e if e
-    exec "uglifyjs2 lib/strftime.js lib/icui.js -o js/jquery.icui.min.js -c -m", (e) ->
+    exec "uglifyjs2 lib/icui.js -o js/jquery.icui.min.js -c -m", (e) ->
       console.log e if e
       exec "rm lib/icui.js", (e) ->
         cb() if cb
@@ -29,15 +29,15 @@ build = (cb) ->
 task 'build', ->
   exec "coffee -cb lib/icui.coffee", (e) ->
       console.log e if e
-      exec "uglifyjs2 lib/strftime.js lib/icui.js -o js/jquery.icui.min.js -c -m", (e) ->
+      exec "uglifyjs2 lib/icui.js -o js/jquery.icui.min.js -c -m", (e) ->
         console.log e if e
         exec "rm lib/icui.js"
 
-fs  = require("fs")     
+fs  = require("fs")
 task 'develop', ->
   http = require("http")
   url = require("url")
-  
+
   console.log "Listening on http://localhost:8888/ ..."
   http.createServer (request, response) ->
     uri = url.parse(request.url).pathname
@@ -57,7 +57,7 @@ task 'develop', ->
             <input type="hidden" class="icuiinp" />
             <input type="submit"/>
           </form>
-          
+
           <h1>Editing</h1>
           <form>
             <input type="hidden" class="icuiinp" value='{"start_date":"2013-06-23T17:30:00.000Z","rrules":[{"rule_type":"IceCube::WeeklyRule", "count": 3, "interval":1,"validations":{"offset_from_pascha": [-3]}}]}' />
@@ -86,14 +86,9 @@ task 'develop', ->
           response.write("""$(function() {document.write("<h1>Compile Error</h1><pre>#{("" + e).replace(/\n/g, "\\n")}</pre>");});""", 'UTF-8')
           response.end()
         else
-          exec "cat lib/icui.js > js/icui.js && cat lib/strftime.js >> js/icui.js", (e) ->
-            if e
-              response.write("""document.body.write('<h1>Compile Error</h1><pre>#{e}</pre>)""", 'UTF-8')
-              response.end()
-            else
-              fs.readFile 'js/icui.js', "binary", (err, file) ->
-                response.write(file, "binary")
-                response.end()
+          fs.readFile 'lib/icui.js', "binary", (err, file) ->
+            response.write(file, "binary")
+            response.end()
     else if extension == 'js' && !uri.match(/jasmine/)
       comps = uri.split('.')
       comps.pop()
